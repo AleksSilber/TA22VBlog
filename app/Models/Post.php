@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    use HasFactory;
+
+    // public function getSnippetAttribute(){
+    //     return explode("\n\n", $this->body)[0];
+    // }
+
+    public function snippet(): Attribute {
+        return Attribute::get(fn () => explode("\n\n", $this->original['body'])[0]);
+    }
+    public function body(): Attribute {
+        return Attribute::get(fn ($value) => nl2br($value));
+    }
+}
