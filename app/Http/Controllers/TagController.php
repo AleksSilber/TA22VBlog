@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Post;
 use App\Models\Tag;
 use App\Http\Requests\StoreTagRequest;
 use App\Http\Requests\UpdateTagRequest;
+use Illuminate\Http\Request;
 
 class TagController extends Controller
 {
@@ -13,7 +14,8 @@ class TagController extends Controller
      */
     public function index()
     {
-        //
+        $tags = Tag::latest()->paginate(10);
+        return view('tags.index', compact('tags'));
     }
 
     /**
@@ -21,15 +23,27 @@ class TagController extends Controller
      */
     public function create()
     {
-        //
+        $posts = Post::all();
+        return view('tags.create', compact('posts'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreTagRequest $request)
+    public function store(Request $requestt)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'body' => 'required|string',
+            'tags' => 'array',
+            'tags.*' => 'exists:tags,id', 
+        ]);
+        $post = Post::create([
+            'title' => $validated['title'],
+            'body' => $validated['body'],
+        ]);
+        $post->tags()->sync($validated['tags']);
+        return redirect()->route('posts.index')->with('success', 'Post created successfully!');
     }
 
     /**
@@ -37,7 +51,7 @@ class TagController extends Controller
      */
     public function show(Tag $tag)
     {
-        //
+        return view('tags.show', compact('tag')); // Return a view to show the tag
     }
 
     /**
@@ -45,15 +59,26 @@ class TagController extends Controller
      */
     public function edit(Tag $tag)
     {
-        //
+        return view('tags.edit', compact('tag')); // Return a view for editing the tag
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateTagRequest $request, Tag $tag)
+    public function update(Request $request, Post $post)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'tags' => 'array|exists:tags,id',
+        ]);
+        $post->update([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+        ]);
+        $post->tags()->sync($validated['tags'] ?? []);
+        return redirect()->route('posts.index')
+                         ->with('success', 'Post updated successfully.');
     }
 
     /**
@@ -61,6 +86,7 @@ class TagController extends Controller
      */
     public function destroy(Tag $tag)
     {
-        //
+        $tag->delete();
+        return redirect()->route('tags.index') ->with('success', 'Tag deleted successfully.');
     }
 }
